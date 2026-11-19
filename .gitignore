@@ -8,6 +8,7 @@
 *.srt
 *.vtt
 *.txt
+!LICENSES/*.txt
 *.png
 __pycache__/
 .claude/settings.local.json
