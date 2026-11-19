@@ -1,0 +1,13 @@
+# Kaynak yayınlar, üretilen Shorts ve geçici dosyalar depoya girmez
+*.mp4
+*.mkv
+*.webm
+*.part
+*.ytdl
+*.ass
+*.srt
+*.vtt
+*.txt
+*.png
+__pycache__/
+.claude/settings.local.json
