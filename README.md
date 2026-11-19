@@ -1,6 +1,6 @@
 # YouTube Shorts Şablonu
 
-Sunucunun solda, haber görselinin sağda durduğu yatay (16:9) haber/yorum programlarından 720×1280 dikey YouTube Shorts üretir. Sunucu üstte, haber paneli altta yer alır, istenirse altyazı eklenir. Ses kesilmez, hızlandırılmaz.
+Sunucunun solda, haber görselinin sağda durduğu yatay (16:9) haber/yorum programlarından 720×1280 dikey YouTube Shorts üretir. Sunucu üstte, haber paneli altta yer alır, altyazı her zaman eklenir. Tek seferde birden fazla Shorts çıkarılabilir. Ses kesilmez, hızlandırılmaz.
 
 ```
 ┌──────────────┬───────────────────┐          ┌───────────┐
@@ -41,31 +41,34 @@ pip install yt-dlp faster-whisper pillow
 1. Yayın videosunu (`.mp4`) ve varsa YouTube'dan kopyalanmış transkriptini (`levent-GG-AA-YYYY-YT.txt`) bu klasöre koy.
 2. Claude Code'da klasörü aç ve iste:
    - `bu videodan 2 dakikalık shorts çıkar`
+   - `3 shorts çıkar` → birbiriyle çakışmayan, ayrı konulardan 3 altyazılı Shorts
    - `08:08 ile 08:44 arasını yap`
-   - `--altyazi ile de çıkar`
+   - `altyazıyı düzelt ve yeniden çıkar`
 
-Kesiti Claude seçer; API anahtarı gerekmez. Seçim ölçütleri `youtube-shorts-ajani-v3.md` bölüm 3.1'de.
+Kesitleri Claude seçer; API anahtarı gerekmez. Dosyalar `levent-shorts-GG-AA-YYYY-<sıra>-<konu>.mp4` adıyla çıkar. Seçim ölçütleri `youtube-shorts-ajani-v3.md` bölüm 3.1'de.
 
 ### Betiği doğrudan çalıştırma
 
 Git Bash'te Türkçe dosya adları için `PYTHONUTF8=1` ile çalıştır.
 
 ```bash
-# Hazır transkriptle, elle aralık (saniye), altyazılı — Whisper çalışmaz, birkaç saniye sürer
-PYTHONUTF8=1 python shorts_ajani.py video.mp4 --baslangic 315.5 --bitis 449.5 --altyazi --transkript levent-19-11-2026-YT.txt
+# Hazır transkriptle, elle aralık (saniye) — altyazılı, Whisper çalışmaz, birkaç saniye sürer
+PYTHONUTF8=1 python shorts_ajani.py video.mp4 --baslangic 315.5 --bitis 449.5 --transkript levent-19-11-2026-YT.txt
 
-# Altyazısız
-PYTHONUTF8=1 python shorts_ajani.py video.mp4 --baslangic 315.5 --bitis 449.5
-
-# Hazır transkript yoksa: Whisper ile transkript çıkar, kesiti sonra seç
+# Hazır transkript yoksa: Whisper ile bir kez transkript çıkar, sonra her kesitte o dosyayı ver
 PYTHONUTF8=1 python shorts_ajani.py video.mp4 --transkript-yaz video.txt --whisper-model medium
+PYTHONUTF8=1 python shorts_ajani.py video.mp4 --baslangic 315.5 --bitis 449.5 --transkript video.txt
+
+# Elle düzeltilmiş altyazıyla yeniden render
+PYTHONUTF8=1 python shorts_ajani.py video.mp4 --baslangic 315.5 --bitis 449.5 --ass shorts.ass --cikti shorts.mp4
 ```
 
 | Seçenek | Açıklama |
 |---|---|
 | `--baslangic`, `--bitis` | Kesit aralığı, saniye cinsinden (ikisi birlikte) |
-| `--altyazi` | Altyazı bandı ekle |
-| `--transkript <txt>` | Hazır YouTube transkriptini kullan, Whisper'ı atla |
+| `--altyazisiz` | Altyazısız çıkar (altyazı varsayılan olarak açık) |
+| `--transkript <txt>` | Hazır transkripti kullan, Whisper'ı atla (YouTube kopyası ya da `--transkript-yaz` çıktısı) |
+| `--ass <dosya>` | Elle düzeltilmiş altyazı dosyasını yeniden üretmeden kullan |
 | `--transkript-yaz <txt>` | Whisper transkriptini dosyaya yaz ve dur |
 | `--cikti <ad>.mp4` | Çıktı dosyasının adı |
 | `--arka-plan bulanik` | Sunucunun yanındaki boşluğu düz renk yerine bulanık görüntüyle doldur |

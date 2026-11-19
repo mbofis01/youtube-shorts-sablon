@@ -45,16 +45,19 @@ Denge ayarı: `UST_H` küçülürse haber alanı büyür, alttan daha az kırpı
 
 Kullanıcı aralık verdiyse seçim yapılmaz, o aralık kullanılır. Vermediyse:
 
+- **Sayı:** Kullanıcı "3 shorts çıkar" gibi sayı verdiyse o kadar, vermediyse 1 kesit seçilir. Kesitler birbiriyle çakışmaz, mümkünse her biri ayrı bir konu anlatır; aynı konu ikiye bölünmez. En güçlü kesit 1 numara olur. Program istenen sayıda iyi kesit çıkarmaya yetmiyorsa sayı zayıf kesitle doldurulmaz; çıkarılabilen kadarı üretilir ve neden eksik kaldığı söylenir.
+
 - **Süre:** Hedef 125–135 sn. 115–145 sn dışı kabul edilmez.
 - **Bütünlük:** Kesit bir cümlenin başında başlar, bir cümlenin sonunda biter. Bir konu açılıp kapanmalı; "bu arada", "şimdi şuna geçelim" gibi geçişlerde başlamaz, konuyu yarıda bırakmaz.
 - **Kendi içinde anlaşılır:** Programın başını izlemeyen biri anlamalı. "Dediğim gibi", "o konu" gibi önceki kısma gönderme yapan cümleyle başlamaz.
 - **Çarpıcılık:** Türkiye gündemi için en paylaşılabilir kısım: somut iddia, isim, rakam, net bir yorum ya da sert bir cümle. Selamlama, reklam, kanal duyurusu, yayın sonu kapanışı ve canlı yayın sorularını okuma kısımları seçilmez.
 - **Görüntü:** Haber paneli sağda olan, sunucu-solda düzenindeki kısım. Tam ekran video oynatılan bölümlerden kaçınılır (betiğin kadraj uyarısı bunu yakalar).
 - **Zaman damgaları:** YouTube transkriptinde zaman yalnızca satır başında var. Başlangıç olarak cümlenin başladığı satırın zamanı, bitiş olarak cümlenin bittiği satırdan bir sonraki satırın zamanı alınır. Betik ±2 sn içinde sessizliğe oturtur.
-- **Rapor:** Seçilen aralık (dk:sn ve saniye), tek cümlelik gerekçe ve varsa 1–2 alternatif aralık kullanıcıya yazılır.
+- **Adlandırma:** `levent-shorts-GG-AA-YYYY-<sıra>-<konu>.mp4` (ör. `levent-shorts-19-11-2026-1-ozel-kurtulmus.mp4`).
+- **Rapor:** Her Shorts için aralık (dk:sn), süre ve tek cümlelik gerekçe kullanıcıya yazılır.
 4. **Kesim noktalarını oturtma:** Transkript varsa önce en yakın cümle sınırına çekilir; FFmpeg `silencedetect` (−32 dB, 0,25 sn) yalnızca ±0,6 sn içinde ince ayar yapar: başlangıç konuşmadan 0,12 sn önce, bitiş konuşmadan 0,35 sn sonra. Elle aralıkta (transkript yok) ±2 sn içindeki en yakın sessizlik kullanılır. Sessizlik bulunamazsa zaman olduğu gibi kalır.
 5. **Kontroller:** Süre 120–140 sn dışındaysa ve sunucu kadrajı kesit boyunca farklı görünüyorsa (tam ekran video, farklı plan) uyarı yazılır; üretim durmaz.
-6. **Altyazı (isteğe bağlı):** Whisper kelime zamanlarından ya da `--transkript` dosyasından ASS dosyası. Hazır transkriptte kelime zamanı olmadığı için satır içindeki kelimeler harf sayısına göre dağıtılır; zamanlama yaklaşıktır.
+6. **Altyazı (varsayılan açık, `--altyazisiz` ile kapanır):** Whisper kelime zamanlarından ya da `--transkript` dosyasından ASS dosyası. Elle düzeltilen `.ass` dosyası `--ass` ile yeniden üretilmeden kullanılır. Hazır transkriptte kelime zamanı olmadığı için satır içindeki kelimeler harf sayısına göre dağıtılır; zamanlama yaklaşıktır.
 7. **Render:** Tek FFmpeg komutu, sesin başında ve sonunda çok kısa fade.
 
 ## 4. Kurulum ve kullanım (Windows)
@@ -66,14 +69,19 @@ pip install yt-dlp faster-whisper google-genai pillow
 FFmpeg ve ffprobe PATH'te olmalı; altyazı için FFmpeg'in `libass` destekli (ör. "full" build) olması gerekir. yt-dlp YouTube tarafında sık değişir, güncel tut (`pip install -U yt-dlp`). Altyazı için Inter fontunu betiğin yanındaki `fonts` klasörüne koy (`fonts\Inter-Bold.otf`).
 
 ```bash
-# Önerilen (API'siz): hazır transkriptle, Claude'un seçtiği aralık, altyazılı — Whisper çalışmaz
-python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --altyazi --transkript levent-19-11-2026-YT.txt
+# Önerilen (API'siz): hazır transkriptle, Claude'un seçtiği aralık — altyazılı, Whisper çalışmaz
+python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --transkript levent-19-11-2026-YT.txt
 
-# Hazır transkript yoksa: önce Whisper transkriptini yaz, Claude okuyup aralığı seçsin
+# Hazır transkript yoksa: Whisper transkriptini bir kez yaz; Claude okuyup aralıkları seçsin,
+# her Shorts'ta bu dosya --transkript ile verilir (Whisper tekrar çalışmaz)
 python shorts_ajani.py ham_video.mp4 --transkript-yaz ham_video.txt --whisper-model medium
+python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --transkript ham_video.txt
 
-# Elle aralık ver (saniye, ikisi birlikte), altyazılı (Whisper ile)
-python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --altyazi
+# Elle düzeltilmiş altyazıyla yeniden render (aynı aralık)
+python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --ass shorts.ass --cikti shorts.mp4
+
+# Altyazısız (kullanılmıyor, gerekirse)
+python shorts_ajani.py ham_video.mp4 --baslangic 275.4 --bitis 405.4 --altyazisiz
 
 # Yedek: Gemini kesiti seçsin (API anahtarı gerekir)
 set GEMINI_API_KEY=...
@@ -98,9 +106,10 @@ Sentetik 1920×1080 ve 1280×720 videolarla denendi: kesim oturtma (elle aralık
 Kullanım:
   python shorts_ajani.py "https://youtube.com/watch?v=..."                 # indir + Gemini kesit + render (API anahtarı gerekir)
   python shorts_ajani.py ham.mp4 --transkript-yaz ham.txt                   # sadece Whisper transkripti; kesiti Claude seçer
-  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --altyazi --transkript levent-GG-AA-YYYY-YT.txt  # Whisper'sız
-  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4            # elle aralık (Whisper gerekmez)
-  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --altyazi   # altyazı bandı da ekle
+  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --transkript levent-GG-AA-YYYY-YT.txt  # altyazılı, Whisper'sız
+  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --transkript ham.txt   # --transkript-yaz çıktısı da olur
+  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --altyazisiz          # altyazı varsayılan açık; kapatmak için
+  python shorts_ajani.py ham.mp4 --baslangic 275.4 --bitis 405.4 --ass duzeltilmis.ass --cikti ayni_ad.mp4  # elle düzeltilen altyazıyla yeniden render
   python shorts_ajani.py ham.mp4 --arka-plan bulanik                         # yan boşluk: düz renk yerine bulanık sunucu
 """
 import argparse, json, os, re, subprocess, sys, tempfile, statistics
@@ -180,22 +189,32 @@ def transkript(video, model="large-v3", cihaz="cpu"):
 
 
 def transkript_dosyadan(yol):
-    """YouTube'dan kopyalanan transkript (ör. '8:228 dakika 22 saniyeKusura bakmayın...').
-    Yalnızca satır başı zamanı var; kelime zamanları satır içinde harf sayısına göre dağıtılır (yaklaşık)."""
+    """İki biçim okunur:
+    - YouTube'dan kopyalanan transkript (ör. '8:228 dakika 22 saniyeKusura bakmayın...'), yalnızca satır başı zamanı var;
+    - --transkript-yaz çıktısı ('[502.1-505.3] metin'), Whisper bir kez çalışır, sonraki kesitler bu dosyayı kullanır.
+    Kelime zamanları satır içinde harf sayısına göre dağıtılır (yaklaşık)."""
     desen = re.compile(r"^(?:(\d+):)?(\d+):(\d{2})(?:\d+ saat ?)?(?:\d+ dakika ?)?(?:\d+ saniye)?(.*)$")
-    satirlar = []
+    desen_aralik = re.compile(r"^\[(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\]\s*(.*)$")
+    satirlar = []                                   # (bas, bit veya None, metin)
     with open(yol, encoding="utf-8-sig") as f:
         for l in f:
-            m = desen.match(l.strip())
+            l = l.strip()
+            m = desen_aralik.match(l)
+            if m:
+                if m.group(3).strip():
+                    satirlar.append((float(m.group(1)), float(m.group(2)), m.group(3).strip()))
+                continue
+            m = desen.match(l)
             if not m or not m.group(4).strip():
                 continue
             sa, dk, sn = int(m.group(1) or 0), int(m.group(2)), int(m.group(3))
-            satirlar.append((sa * 3600 + dk * 60 + sn, m.group(4).strip()))
+            satirlar.append((sa * 3600 + dk * 60 + sn, None, m.group(4).strip()))
     if not satirlar:
         raise ValueError(f"Transkriptte zaman damgalı satır bulunamadı: {yol}")
     kelimeler = []
-    for i, (s, metin) in enumerate(satirlar):
-        e = satirlar[i + 1][0] if i + 1 < len(satirlar) else s + 6
+    for i, (s, e, metin) in enumerate(satirlar):
+        if e is None:
+            e = satirlar[i + 1][0] if i + 1 < len(satirlar) else s + 6
         ws = metin.split()
         toplam = sum(len(w) + 1 for w in ws)
         t = float(s)
@@ -432,7 +451,10 @@ def main():
     ap.add_argument("kaynak", help="YouTube linki veya yerel mp4")
     ap.add_argument("--baslangic", type=float, help="saniye; --bitis ile birlikte verilmeli")
     ap.add_argument("--bitis", type=float, help="saniye; --baslangic ile birlikte verilmeli")
-    ap.add_argument("--altyazi", action="store_true")
+    ap.add_argument("--altyazi", action="store_true", default=True,
+                    help="altyazı bandı (varsayılan açık; eski komutlarla uyum için duruyor)")
+    ap.add_argument("--altyazisiz", dest="altyazi", action="store_false", help="altyazısız çıkar")
+    ap.add_argument("--ass", metavar="ASS", help="elle düzeltilmiş altyazı dosyasını yeniden üretmeden kullan")
     ap.add_argument("--arka-plan", choices=["renk", "bulanik"], default="renk",
                     help="sunucunun yanındaki boşluk: duvar rengi (varsayılan) veya bulanık sunucu")
     ap.add_argument("--cikti", default="shorts.mp4")
@@ -455,6 +477,10 @@ def main():
     if not a.kaynak.startswith("http") and not os.path.isfile(a.kaynak):
         ap.error(f"Dosya bulunamadı: {a.kaynak}")
 
+    if a.ass:
+        if not os.path.isfile(a.ass):
+            ap.error(f"ASS dosyası bulunamadı: {a.ass}")
+        a.altyazi = False                               # Whisper/transkript gerekmez
     if a.transkript and not os.path.isfile(a.transkript):
         ap.error(f"Transkript bulunamadı: {a.transkript}")
     elle = a.baslangic is not None
@@ -492,7 +518,9 @@ def main():
               f"{sapma}. Çıktıyı bu yerlerde elle kontrol et.", file=sys.stderr)
 
     ass = None
-    if a.altyazi:
+    if a.ass:
+        ass = a.ass                                     # düzeltilmiş dosya; üzerine yazılmaz
+    elif a.altyazi:
         ass = os.path.splitext(a.cikti)[0] + ".ass"
         ass_yaz(kelimeler, bas, bit, ass)
     renk = arka_plan_rengi(video, bas + 3, w, h) if a.arka_plan == "renk" else VARSAYILAN_RENK
