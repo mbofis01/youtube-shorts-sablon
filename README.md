@@ -85,4 +85,4 @@ Ayrıntılar ve diğer sınırlar için `youtube-shorts-ajani-v3.md` bölüm 6'y
 
 ## Lisans
 
-Inter fontu SIL Open Font License 1.1 ile dağıtılır, bkz. `LICENSES/Inter-OFL.txt`.
+Betik, ajan ve belgeler MIT lisansıyla dağıtılır, bkz. `LICENSE`. Inter fontu bu lisansa dahil değildir; SIL Open Font License 1.1 ile dağıtılır, bkz. `LICENSES/Inter-OFL.txt`.
